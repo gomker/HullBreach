@@ -8,9 +8,7 @@ namespace HullBreach
 {
     public class ModuleHullBreach : PartModule
     {
-        public bool HullisBreached;
-        public bool ShipisWrecked;
-        public bool TakingOnWater;
+        public bool HullisBreached;      
         public string DamageState ="None"; //None, Normal,Critical
 
         [KSPField(isPersistant = false)]
@@ -38,27 +36,26 @@ namespace HullBreach
             if (HullisBreached)
             {
                 HullisBreached = false;
-                ShipisWrecked = false;
-                TakingOnWater = false;
                 HullBreachTest = false;
+                DamageState = "None";
             }
             else
             {
                 HullisBreached = true;
-                ShipisWrecked = true;
-                TakingOnWater = true;
                 HullBreachTest = true;
+                DamageState = "Critical";
             }
         }
 
-        public override void OnFixedUpdate()
+        public void FixedUpdate()
         {
             
             if (!HighLogic.LoadedSceneIsFlight) return;
 
             if (this.part.WaterContact && HullisBreached)
             { 
-            //Water Should Come In 
+                //Water Should Come In 
+                ScreenMessages.PostScreenMessage("Warning Hull Breach", 5.0f, ScreenMessageStyle.UPPER_CENTER);
                 switch (DamageState)
                 {
                     case "Normal":
@@ -71,18 +68,21 @@ namespace HullBreach
             }
         }
 
+        //Get Time Delta
+        private float CurrentTime = 0f;
+        private float TotalTime = 1f;
+        private void GetTimeDiff()
+        {
+            CurrentTime += Time.deltaTime;
+            if (CurrentTime >= TotalTime){CurrentTime -= TotalTime;}
+        }
         public bool ShipIsDamaged()
         {
-            
+            //Check Damage Based on Heat
+            //Increase DamageState Nomal/Crit Level
+            //Flip HullIsBreached to Trigger adding SeaWater
             return true;
 
-        }
-        public bool HullBreachState()
-        {
-
-            
-            HullisBreached = true;
-            return true;
         }
     }
 }
