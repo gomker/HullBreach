@@ -27,6 +27,9 @@ namespace HullBreach
         [KSPField(guiActive = true, guiActiveEditor = true, guiFormat = "P0", isPersistant = true, guiName = "FlowRateModifier")]
         public float flowMultiplier = 1;
 
+        [KSPField(isPersistant = true, guiActive = true, guiName = "Percent Heat")]
+        public double pctHeat = 0 ;
+
         [KSPField(isPersistant = true, guiActive = true, guiName = "Test Hull Breach")]
         Boolean HullBreachTest;
 
@@ -49,20 +52,20 @@ namespace HullBreach
 
         public void FixedUpdate()
         {
-            
-            if (!HighLogic.LoadedSceneIsFlight) return;
-
-            if (this.part.WaterContact && HullisBreached)
+            pctHeat = Math.Round((this.part.temperature / this.part.maxTemp) * 100);
+            if (!(vessel.situation == Vessel.Situations.SPLASHED)) return;
+                        
+            if (this.part.WaterContact & ShipIsDamaged() & HullisBreached)
             { 
                 //Water Should Come In 
                 ScreenMessages.PostScreenMessage("Warning Hull Breach", 5.0f, ScreenMessageStyle.UPPER_CENTER);
                 switch (DamageState)
                 {
                     case "Normal":
-                        this.part.RequestResource("SeaWater", (0 - (critFlowRate * (0.1 + this.part.submergedPortion))));
+                        this.part.RequestResource("SeaWater", (0 - (critFlowRate * (0.1 + this.part.submergedPortion)/* * flowMultiplier*/)));
                         break;
                     case "Critical":
-                        this.part.RequestResource("SeaWater", (0 - (flowRate * (0.1 + this.part.submergedPortion))));
+                        this.part.RequestResource("SeaWater", (0 - (flowRate * (0.1 + this.part.submergedPortion)/* * flowMultiplier*/)));
                         break;
                 }
             }
@@ -81,7 +84,25 @@ namespace HullBreach
             //Check Damage Based on Heat
             //Increase DamageState Nomal/Crit Level
             //Flip HullIsBreached to Trigger adding SeaWater
-            return true;
+            if (this.part.temperature >= (this.part.maxTemp * breachTemp))
+            {
+                HullisBreached = true;
+                DamageState = "Normal";
+            }
+            else if (this.part.temperature >= (this.part.maxTemp * critBreachTemp))
+            {
+                HullisBreached = true;
+                DamageState = "Critical";
+            }              
+            if(DamageState=="None")
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+            
 
         }
     }
