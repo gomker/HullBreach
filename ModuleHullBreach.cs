@@ -23,17 +23,18 @@ namespace HullBreach
         [KSPField(isPersistant = false)]
         public double critBreachTemp = 0.9;
 
+        //[UI_FloatRange(minValue = 1, maxValue = 10, stepIncrement = 1)]
         [UI_FloatRange(minValue = 1, maxValue = 100, stepIncrement = 1)]
-        [KSPField(guiActive = true, guiActiveEditor = true, guiFormat = "P0", isPersistant = true, guiName = "FlowRateModifier")]
+        [KSPField(guiActive = true, guiActiveEditor = true, /*guiFormat = "P0",*/ isPersistant = true, guiName = "FlowRateModifier")]
         public float flowMultiplier = 1;
 
-        [KSPField(isPersistant = true, guiActive = true, guiName = "Percent Heat")]
+        [KSPField(guiActive = true, isPersistant = false,guiName = "Heat Level")]
         public double pctHeat = 0 ;
 
-        [KSPField(isPersistant = true, guiActive = true, guiName = "Test Hull Breach")]
+        [KSPField(isPersistant = true, guiActive = true, guiName = "Test Breach")]
         Boolean HullBreachTest;
 
-        [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Toggle HullBreach")]
+        [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Test Breach")]
         public void ToggleHullBreach()
         {
             if (HullisBreached)
@@ -41,31 +42,34 @@ namespace HullBreach
                 HullisBreached = false;
                 HullBreachTest = false;
                 DamageState = "None";
+                FixedUpdate();
             }
             else
             {
                 HullisBreached = true;
                 HullBreachTest = true;
                 DamageState = "Critical";
+                FixedUpdate();
             }
         }
 
         public void FixedUpdate()
         {
+            Debug.Log(vessel.situation);
             pctHeat = Math.Round((this.part.temperature / this.part.maxTemp) * 100);
             if (!(vessel.situation == Vessel.Situations.SPLASHED)) return;
                         
             if (this.part.WaterContact & ShipIsDamaged() & HullisBreached)
             { 
                 //Water Should Come In 
-                ScreenMessages.PostScreenMessage("Warning Hull Breach", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                ScreenMessages.PostScreenMessage("Warning: Hull Breach", 5.0f, ScreenMessageStyle.UPPER_CENTER);
                 switch (DamageState)
                 {
                     case "Normal":
-                        this.part.RequestResource("SeaWater", (0 - (flowRate * (0.1 + this.part.submergedPortion)/* * flowMultiplier*/)));
+                        this.part.RequestResource("SeaWater", (0 - (flowRate * (0.1 + this.part.submergedPortion) * flowMultiplier)));
                         break;
                     case "Critical":
-                        this.part.RequestResource("SeaWater", (0 - (critFlowRate * (0.1 + this.part.submergedPortion)/* * flowMultiplier*/)));
+                        this.part.RequestResource("SeaWater", (0 - (critFlowRate * (0.1 + this.part.submergedPortion) * flowMultiplier)));
                         break;
                 }
             }
