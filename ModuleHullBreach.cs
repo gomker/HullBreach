@@ -55,7 +55,7 @@ namespace HullBreach
 
         public void FixedUpdate()
         {
-            Debug.Log(vessel.situation);
+            //Debug.Log(vessel.situation);
             pctHeat = Math.Round((this.part.temperature / this.part.maxTemp) * 100);
             if (!(vessel.situation == Vessel.Situations.SPLASHED)) return;
                         
