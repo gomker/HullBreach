@@ -29,14 +29,23 @@ namespace HullBreach
         [KSPField(isPersistant = true)]
         public bool hull = false;
 
+        #region Debug Fields
 
+        [KSPField(guiActive = true, isPersistant = false, guiName = "Submerged Portion")]
+        public double sumergedPortion;
+
+        [KSPField(guiActive = true, isPersistant = false, guiName = "Current Situation")]
+        public string vesselSituation;
+
+        [KSPField(guiActive = true, isPersistant = false, guiName = "Heat Level")]
+        public double pctHeat = 0;
+
+        #endregion
+        
         //[UI_FloatRange(minValue = 1, maxValue = 10, stepIncrement = 1)]
         [UI_FloatRange(minValue = 1, maxValue = 100, stepIncrement = 1)]
         [KSPField(guiActive = true, guiActiveEditor = true, /*guiFormat = "P0",*/ isPersistant = true, guiName = "FlowRateModifier")]
         public float flowMultiplier = 1;
-
-        [KSPField(guiActive = true, isPersistant = false,guiName = "Heat Level")]
-        public double pctHeat = 0 ;
 
         [KSPField(isPersistant = true, guiActive = true, guiName = "Test Breach")]
         Boolean HullBreachTest;
@@ -59,13 +68,14 @@ namespace HullBreach
                 FixedUpdate();
             }
         }
-
+                
         public void FixedUpdate()
         {
-            //Debug.Log(vessel.situation);
+            //*Debug Fields
             vesselSituation = vessel.situation.ToString();
-
             pctHeat = Math.Round((this.part.temperature / this.part.maxTemp) * 100);
+            //*
+
             if (!(vessel.situation == Vessel.Situations.SPLASHED)) return;
                         
             if (this.part.WaterContact & ShipIsDamaged() & HullisBreached & hull)
@@ -84,7 +94,8 @@ namespace HullBreach
             }
             
             //If part underwater add heat at a greater rate based on depth to simulate pressure
-            sumergedPortion = Math.Round(this.part.submergedPortion,2);
+            sumergedPortion = Math.Round(this.part.submergedPortion,6);
+
             if (this.part.submergedPortion == 1 && hydroExplosive)
             { 
             // this.part.depth
@@ -92,11 +103,7 @@ namespace HullBreach
             }
         }
 
-        [KSPField(guiActive = true, isPersistant = false, guiName = "Submerged Portion")]
-        public double sumergedPortion;
 
-        [KSPField(guiActive = true, isPersistant = false, guiName = "Current Situation")]
-        public string vesselSituation;
 
         //Get Time Delta
         private float CurrentTime = 0f;
@@ -122,8 +129,12 @@ namespace HullBreach
                 HullisBreached = true;
                 DamageState = "Critical";
             }
-                  
-            if(DamageState=="None")
+
+            if (HullBreachTest == true)
+            {
+                return true;
+            }
+            else if(DamageState=="None")
             {
                 return false;
             }
@@ -134,5 +145,41 @@ namespace HullBreach
             
 
         }
+
+        public double warnTimer = 0;
+        public double warnDepth = 50;
+        public double oldVesselDepth;
+        public double crushDepth = 100;
+
+        private void crushingDepth()
+        {
+            if (FlightGlobals.ActiveVessel == null || this.part.submergedPortion != 1) return;
+
+            if (warnTimer > 0f) warnTimer -= Time.deltaTime;
+            if (part.depth > warnDepth && oldVesselDepth > warnDepth && warnTimer <= 0)
+            {
+                ScreenMessages.PostScreenMessage("Warning! Vessel will be crushed at " + (crushDepth * -1) + "m depth!", 3, ScreenMessageStyle.LOWER_CENTER);
+                warnTimer = 5;
+            }
+
+            oldVesselDepth = this.part.depth;
+            foreach (Vessel crushableVessel in FlightGlobals.Vessels)
+            {
+                if (crushableVessel.loaded && this.part.depth > warnDepth)
+                {
+                    foreach (Part crushablePart in crushableVessel.parts)
+                    {                                  
+                        if (this.part.depth > crushDepth & !hydroExplosive)
+                        {
+                            GameEvents.onCrashSplashdown.Fire(new EventReport(FlightEvents.SPLASHDOWN_CRASH, crushablePart, crushablePart.partInfo.title, "ocean", 0, " Part was crushed under the weight of the ocean"));
+                            crushablePart.explode();
+                        }
+                    }
+                }
+            }
+        }
+
+        /////////////////////////
+
     }
 }
