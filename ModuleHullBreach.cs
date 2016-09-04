@@ -31,6 +31,9 @@ namespace HullBreach
 
         #region Debug Fields
 
+        [KSPField(isPersistant = true)]
+        public bool partDebug = true;  
+         
         [KSPField(guiActive = true, isPersistant = false, guiName = "Submerged Portion")]
         public double sumergedPortion;
 
@@ -39,6 +42,9 @@ namespace HullBreach
 
         [KSPField(guiActive = true, isPersistant = false, guiName = "Heat Level")]
         public double pctHeat = 0;
+
+        [KSPField(guiActive = true, isPersistant = false, guiName = "Current Depth")]
+        public double currentDepth = 0;
 
         #endregion
         
@@ -68,12 +74,25 @@ namespace HullBreach
                 FixedUpdate();
             }
         }
+
+        public override void OnStart(StartState state)
+        {
+            if (state != StartState.Editor & vessel !=null & !partDebug)
+            //foreach (BaseField f in Fields) { f.guiActive = false; } ???
+            {
+                Fields["Submerged Portion"].guiActive = false;
+                Fields["Current Situation"].guiActive = false;
+                Fields["Heat Level"].guiActive = false;
+                Fields["Current Depth"].guiActive = false;
+            }
+        }
                 
         public void FixedUpdate()
         {
             //*Debug Fields
             vesselSituation = vessel.situation.ToString();
             pctHeat = Math.Round((this.part.temperature / this.part.maxTemp) * 100);
+            currentDepth = Math.Round(this.part.depth,2);
             //*
 
             if (!(vessel.situation == Vessel.Situations.SPLASHED)) return;
@@ -97,13 +116,15 @@ namespace HullBreach
             sumergedPortion = Math.Round(this.part.submergedPortion,6);
 
             if (this.part.submergedPortion == 1 && hydroExplosive)
-            { 
-            // this.part.depth
+            {
+                // this.part.depth
                 this.part.temperature += (0.1 * this.part.depth);
             }
+            else
+            {
+                crushingDepth();
+            }
         }
-
-
 
         //Get Time Delta
         private float CurrentTime = 0f;
@@ -130,7 +151,7 @@ namespace HullBreach
                 DamageState = "Critical";
             }
 
-            if (HullBreachTest == true)
+            if (HullBreachTest == true) //forcing if testing hull breach
             {
                 return true;
             }
@@ -141,19 +162,25 @@ namespace HullBreach
             else
             {
                 return true;
-            }
-            
-
+            }           
         }
+
+        #region Parts that do not take on water curshed by going below a certain depth
+
+        [KSPField(isPersistant = true)]
+        public bool crushable = false;
 
         public double warnTimer = 0;
         public double warnDepth = 50;
         public double oldVesselDepth;
-        public double crushDepth = 100;
+        
+        [KSPField(isPersistant = true)]
+        public double crushDepth = 50;
 
         private void crushingDepth()
         {
             if (FlightGlobals.ActiveVessel == null || this.part.submergedPortion != 1) return;
+            if (hull || hydroExplosive) return;
 
             if (warnTimer > 0f) warnTimer -= Time.deltaTime;
             if (part.depth > warnDepth && oldVesselDepth > warnDepth && warnTimer <= 0)
@@ -168,8 +195,8 @@ namespace HullBreach
                 if (crushableVessel.loaded && this.part.depth > warnDepth)
                 {
                     foreach (Part crushablePart in crushableVessel.parts)
-                    {                                  
-                        if (this.part.depth > crushDepth & !hydroExplosive)
+                    {
+                        if (crushable & this.part.depth > crushDepth)
                         {
                             GameEvents.onCrashSplashdown.Fire(new EventReport(FlightEvents.SPLASHDOWN_CRASH, crushablePart, crushablePart.partInfo.title, "ocean", 0, " Part was crushed under the weight of the ocean"));
                             crushablePart.explode();
@@ -179,7 +206,7 @@ namespace HullBreach
             }
         }
 
-        /////////////////////////
+        #endregion
 
     }
 }
