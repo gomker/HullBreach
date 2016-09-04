@@ -23,6 +23,13 @@ namespace HullBreach
         [KSPField(isPersistant = false)]
         public double critBreachTemp = 0.9;
 
+        [KSPField(isPersistant = true)]
+        public bool hydroExplosive = false;
+
+        [KSPField(isPersistant = true)]
+        public bool hull = false;
+
+
         //[UI_FloatRange(minValue = 1, maxValue = 10, stepIncrement = 1)]
         [UI_FloatRange(minValue = 1, maxValue = 100, stepIncrement = 1)]
         [KSPField(guiActive = true, guiActiveEditor = true, /*guiFormat = "P0",*/ isPersistant = true, guiName = "FlowRateModifier")]
@@ -56,10 +63,12 @@ namespace HullBreach
         public void FixedUpdate()
         {
             //Debug.Log(vessel.situation);
+            vesselSituation = vessel.situation.ToString();
+
             pctHeat = Math.Round((this.part.temperature / this.part.maxTemp) * 100);
             if (!(vessel.situation == Vessel.Situations.SPLASHED)) return;
                         
-            if (this.part.WaterContact & ShipIsDamaged() & HullisBreached)
+            if (this.part.WaterContact & ShipIsDamaged() & HullisBreached & hull)
             { 
                 //Water Should Come In 
                 ScreenMessages.PostScreenMessage("Warning: Hull Breach", 5.0f, ScreenMessageStyle.UPPER_CENTER);
@@ -73,7 +82,21 @@ namespace HullBreach
                         break;
                 }
             }
+            
+            //If part underwater add heat at a greater rate based on depth to simulate pressure
+            sumergedPortion = Math.Round(this.part.submergedPortion,2);
+            if (this.part.submergedPortion == 1 && hydroExplosive)
+            { 
+            // this.part.depth
+                this.part.temperature += (0.1 * this.part.depth);
+            }
         }
+
+        [KSPField(guiActive = true, isPersistant = false, guiName = "Submerged Portion")]
+        public double sumergedPortion;
+
+        [KSPField(guiActive = true, isPersistant = false, guiName = "Current Situation")]
+        public string vesselSituation;
 
         //Get Time Delta
         private float CurrentTime = 0f;
@@ -83,6 +106,7 @@ namespace HullBreach
             CurrentTime += Time.deltaTime;
             if (CurrentTime >= TotalTime){CurrentTime -= TotalTime;}
         }
+
         public bool ShipIsDamaged()
         {
             //Check Damage Based on Heat
@@ -97,7 +121,8 @@ namespace HullBreach
             {
                 HullisBreached = true;
                 DamageState = "Critical";
-            }              
+            }
+                  
             if(DamageState=="None")
             {
                 return false;

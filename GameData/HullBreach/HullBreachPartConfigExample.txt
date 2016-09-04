@@ -1,9 +1,0 @@
-	MODULE
-	{
-	name = ModuleHullBreach
-	flowRate = 750 //Flowrate for damage at breachTemp, default is 0.6
-	critFlowRate = 4000 //Flowrate for damage at critBreachTemp , default is 0.9
-	breachTemp = 0.4
-	critBreachTemp = 0.8
-	hull = true
-	}
