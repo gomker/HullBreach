@@ -101,7 +101,7 @@ xcopy /Y "$(TargetDir)$(TargetName).dll.mdb" "%25KSP_DIR%25\$(TargetName)\Plugin
 @echo deleting existing archives
 if exist "$(ProjectDir)BuildRelease\*.zip" del "$(ProjectDir)BuildRelease\*.zip"
 @echo packaging files...
-call "%25ZIP%25\7za.exe" a -tzip -r  "$(ProjectDir)BuildRelease\$(TargetName)_$(ConfigurationName).@(VersionNumber)_%25DATE:~4,2%25%25DATE:~7,2%25%25DATE:~10,4%25.zip" "$(ProjectDir)GameData\"
+call "%25ZIP%25\7za.exe" a -tzip -r  "$(ProjectDir)BuildRelease\$(TargetName)_$(ConfigurationName).v@(VersionNumber)_%25DATE:~4,2%25%25DATE:~7,2%25%25DATE:~10,4%25.zip" "$(ProjectDir)GameData\"
 
 @echo copy package to Dropbox
 xcopy /Y "$(ProjectDir)BuildRelease\*.zip" "C:\Users\dlane\Dropbox\Kerbal\ModRelease\Test\"
