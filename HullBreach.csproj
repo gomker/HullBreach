@@ -69,11 +69,44 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Target Name="PostBuildMacros">
+    <GetAssemblyIdentity AssemblyFiles="$(TargetPath)">
+      <Output TaskParameter="Assemblies" ItemName="Targets" />
+    </GetAssemblyIdentity>
+    <ItemGroup>
+      <VersionNumber Include="@(Targets->'%(Version)')" />
+    </ItemGroup>
+  </Target>
   <PropertyGroup>
-    <PostBuildEvent>"C:\Games\Tools\pdb2mdb\pdb2mdb.exe" "$(TargetFileName)"
-xcopy /Y "$(TargetPath)" "C:\Games\KSP\GameData\HullBreach\Plugins\"
-xcopy /Y "$(TargetDir)$(TargetName).pdb" "C:\Games\KSP\GameData\HullBreach\Plugins\"
-xcopy /Y "$(TargetDir)$(TargetName).dll.mdb" "C:\Games\KSP\GameData\HullBreach\Plugins\"</PostBuildEvent>
+    <PostBuildEventDependsOn>
+    $(PostBuildEventDependsOn);
+    PostBuildMacros;
+  </PostBuildEventDependsOn>
+    <PostBuildEvent>@echo ...
+@echo distributing $(Targetname) files...
+
+SET KSP_DIR=C:\Games\KSP\GameData\
+SET ZIP=C:\Games\Tools\7zip\
+SET pdb2mdb=C:\Games\Tools\pdb2mdb\
+
+xcopy /Y "$(TargetPath)" "$(ProjectDir)\GameData\$(TargetName)\Plugins\"
+xcopy /Y "$(TargetPath)" "%25KSP_DIR%25\$(TargetName)\Plugins\"
+xcopy /Y "$(TargetPath)" "C:\Users\dlane\Dropbox\Kerbal\ModRelease\Test\"
+
+@echo building $(Targetname).dll.mdb file for debug...
+call "%25pdb2mdb%25\pdb2mdb.exe" "$(TargetFileName)"
+xcopy /Y "$(TargetDir)$(TargetName).pdb" "%25KSP_DIR%25\$(TargetName)\Plugins\"
+xcopy /Y "$(TargetDir)$(TargetName).dll.mdb" "%25KSP_DIR%25\$(TargetName)\Plugins\"
+
+@echo deleting existing archives
+if exist "$(ProjectDir)BuildRelease\*.zip" del "$(ProjectDir)BuildRelease\*.zip"
+@echo packaging files...
+call "%25ZIP%25\7za.exe" a -tzip -r  "$(ProjectDir)BuildRelease\$(TargetName)_$(ConfigurationName).@(VersionNumber)_%25DATE:~4,2%25%25DATE:~7,2%25%25DATE:~10,4%25.zip" "$(ProjectDir)GameData\"
+
+@echo copy package to Dropbox
+xcopy /Y "$(ProjectDir)BuildRelease\*.zip" "C:\Users\dlane\Dropbox\Kerbal\ModRelease\Test\"
+
+@echo Build/deploy complete!</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

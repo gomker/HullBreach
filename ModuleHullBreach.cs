@@ -8,6 +8,8 @@ namespace HullBreach
 {
     public class ModuleHullBreach : PartModule
     {
+        #region KSP Fields
+
         public bool HullisBreached;      
         public string DamageState ="None"; //None, Normal,Critical
 
@@ -46,7 +48,9 @@ namespace HullBreach
         [KSPField(guiActive = true, isPersistant = false, guiName = "Current Depth")]
         public double currentDepth = 0;
 
-        #endregion
+        #endregion DebugFields
+
+      
         
         //[UI_FloatRange(minValue = 1, maxValue = 10, stepIncrement = 1)]
         [UI_FloatRange(minValue = 1, maxValue = 100, stepIncrement = 1)]
@@ -74,6 +78,8 @@ namespace HullBreach
                 FixedUpdate();
             }
         }
+
+        #endregion KSPFields
 
         public override void OnStart(StartState state)
         {
@@ -127,13 +133,14 @@ namespace HullBreach
         }
 
         //Get Time Delta
-        private float CurrentTime = 0f;
-        private float TotalTime = 1f;
-        private void GetTimeDiff()
-        {
-            CurrentTime += Time.deltaTime;
-            if (CurrentTime >= TotalTime){CurrentTime -= TotalTime;}
-        }
+        //private float CurrentTime = 0f;
+        //private float TotalTime = 1f;
+
+        //private void GetTimeDiff()
+        //{
+        //    CurrentTime += Time.deltaTime;
+        //    if (CurrentTime >= TotalTime){CurrentTime -= TotalTime;}
+        //}
 
         public bool ShipIsDamaged()
         {
@@ -185,7 +192,7 @@ namespace HullBreach
             if (warnTimer > 0f) warnTimer -= Time.deltaTime;
             if (part.depth > warnDepth && oldVesselDepth > warnDepth && warnTimer <= 0)
             {
-                ScreenMessages.PostScreenMessage("Warning! Vessel will be crushed at " + (crushDepth * -1) + "m depth!", 3, ScreenMessageStyle.LOWER_CENTER);
+                ScreenMessages.PostScreenMessage("Warning! Vessel will be crushed at " + (crushDepth) + "m depth!", 3, ScreenMessageStyle.LOWER_CENTER);
                 warnTimer = 5;
             }
 
