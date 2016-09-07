@@ -48,9 +48,7 @@ namespace HullBreach
         [KSPField(guiActive = true, isPersistant = false, guiName = "Current Depth")]
         public double currentDepth = 0;
 
-        #endregion DebugFields
-
-      
+        #endregion DebugFields            
         
         //[UI_FloatRange(minValue = 1, maxValue = 10, stepIncrement = 1)]
         [UI_FloatRange(minValue = 1, maxValue = 100, stepIncrement = 1)]
@@ -125,6 +123,7 @@ namespace HullBreach
             {
                 // this.part.depth
                 this.part.temperature += (0.1 * this.part.depth);
+                this.part.RequestResource("Electric Charge", 1000); //kill EC if sumberged
             }
             else
             {
@@ -186,9 +185,10 @@ namespace HullBreach
 
         private void crushingDepth()
         {
-            if (FlightGlobals.ActiveVessel == null || this.part.submergedPortion != 1) return;
-            if (hull || hydroExplosive) return;
-
+            if (FlightGlobals.ActiveVessel == null || this.part.submergedPortion != 1) return; //Nothing crushed unless its underwater
+            if (hull || hydroExplosive) return; //No hulls or Hydroexplosive parts will be crushed, they will slowly add heat and explode
+            if(crushable) part.partBuoyancy = null; // trying to kill floaty bits that never sink 
+          
             if (warnTimer > 0f) warnTimer -= Time.deltaTime;
             if (part.depth > warnDepth && oldVesselDepth > warnDepth && warnTimer <= 0)
             {
