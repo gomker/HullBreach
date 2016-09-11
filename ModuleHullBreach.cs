@@ -81,7 +81,7 @@ namespace HullBreach
 
         public override void OnStart(StartState state)
         {
-            if (state != StartState.Editor & vessel !=null & !partDebug)
+            if (state != StartState.Editor & vessel !=null & partDebug == false) //hiding info fields for troubleshooting
             //foreach (BaseField f in Fields) { f.guiActive = false; } ???
             {
                 Fields["Submerged Portion"].guiActive = false;
