@@ -132,7 +132,14 @@ namespace HullBreach
                 this.part.RequestResource("Electric Charge", 1000); //kill EC if sumberged
             }
             else
-            {
+            {                
+                if (warnTimer > 0f) warnTimer -= Time.deltaTime;
+                if (part.depth > warnDepth && oldVesselDepth > warnDepth && warnTimer <= 0)
+                {
+                    if(FlightGlobals.ActiveVessel){ScreenMessages.PostScreenMessage("Warning! Vessel will be crushed at " + (crushDepth) + "m depth!", 3, ScreenMessageStyle.LOWER_CENTER);}
+                    warnTimer = 5;
+                }
+                oldVesselDepth = part.depth;
                 crushingDepth();
             }
         }
@@ -207,35 +214,27 @@ namespace HullBreach
         {
             //Nothing crushed unless : Vessel is under water, part is crushable,part is fully submerged, part is not a hull and part is not hydroexplosive
             // Any of these true do not crush
-            if (TrueAlt()> 0 || !crushable || part.submergedPortion != 1 || hull || hydroExplosive) return; 
+            if (!crushable || hull || hydroExplosive || part.submergedPortion != 1 || TrueAlt() > 0.01) return;            
+            if(crushable) part.buoyancy = 0f; // trying to kill floaty bits that never sink 
             
-            if(crushable) part.partBuoyancy = null; // trying to kill floaty bits that never sink 
-          
-            if (warnTimer > 0f) warnTimer -= Time.deltaTime;
-            if (part.depth > warnDepth && oldVesselDepth > warnDepth && warnTimer <= 0)
-            {
-                ScreenMessages.PostScreenMessage("Warning! Vessel will be crushed at " + (crushDepth) + "m depth!", 3, ScreenMessageStyle.LOWER_CENTER);
-                warnTimer = 5;
-            }
-
-            oldVesselDepth = part.depth;
-            foreach (Vessel crushableVessel in FlightGlobals.Vessels)
-            {
-                if (crushableVessel.loaded && part.depth > warnDepth)
-                {
-                    foreach (Part crushablePart in crushableVessel.parts)
-                    {
-                        if (crushable & this.part.depth > crushDepth)
+            //foreach (Vessel crushableVessel in FlightGlobals.Vessels)  //grabbing all vessels?
+            //{
+                //if (crushableVessel.loaded & crushable)
+                //{
+                    //foreach (Part crushablePart in crushableVessel.parts)
+                   // {
+                        if (crushable & this.part.depth > crushDepth & (TrueAlt()* -1) > crushDepth)
                         {
-                            GameEvents.onCrashSplashdown.Fire(new EventReport(FlightEvents.SPLASHDOWN_CRASH, crushablePart, crushablePart.partInfo.title, "ocean", 0, " Part was crushed under the weight of the ocean"));
-                            crushablePart.explode();
+                            GameEvents.onCrashSplashdown.Fire(new EventReport(FlightEvents.SPLASHDOWN_CRASH, part, part.partInfo.title, "ocean", 0, " Part was crushed under the weight of the ocean"));
+                            part.explode();
                         }
-                    }
-                }
-            }
+                    //}
+                //}
+           // }
         }
 
         #endregion
+
         #endregion
 
     }
