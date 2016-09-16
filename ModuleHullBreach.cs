@@ -48,6 +48,9 @@ namespace HullBreach
         [KSPField(guiActive = true, isPersistant = false, guiName = "Current Depth")]
         public double currentDepth = 0;
 
+        [KSPField(guiActive = true, isPersistant = false, guiName = "Current Altitude")]
+        public double currentAlt = 0;
+
         #endregion DebugFields            
         
         //[UI_FloatRange(minValue = 1, maxValue = 10, stepIncrement = 1)]
@@ -79,6 +82,7 @@ namespace HullBreach
 
         #endregion KSPFields
 
+        #region GameEvents
         public override void OnStart(StartState state)
         {
             if (state != StartState.Editor & vessel !=null & partDebug == false) //hiding info fields for troubleshooting
@@ -88,6 +92,7 @@ namespace HullBreach
                 Fields["Current Situation"].guiActive = false;
                 Fields["Heat Level"].guiActive = false;
                 Fields["Current Depth"].guiActive = false;
+                Fields["Current Altitude"].guiActive = false;
             }
         }
                 
@@ -95,6 +100,7 @@ namespace HullBreach
         {
             //*Debug Fields
             vesselSituation = vessel.situation.ToString();
+            currentAlt = TrueAlt();
             pctHeat = Math.Round((this.part.temperature / this.part.maxTemp) * 100);
             currentDepth = Math.Round(this.part.depth,2);
             //*
@@ -131,16 +137,19 @@ namespace HullBreach
             }
         }
 
-        //Get Time Delta
-        //private float CurrentTime = 0f;
-        //private float TotalTime = 1f;
+        public double TrueAlt()
+        {
+            Vector3 pos = this.vessel.GetWorldPos3D();
+            double ASL = FlightGlobals.getAltitudeAtPos(pos);
+            if (this.vessel.mainBody.pqsController == null) { return ASL; }
+            double terrainAlt = this.vessel.pqsAltitude;
+            if (this.vessel.mainBody.ocean && terrainAlt <= 0) { return ASL; } //Checks for oceans
+            return ASL - terrainAlt;
+        }
 
-        //private void GetTimeDiff()
-        //{
-        //    CurrentTime += Time.deltaTime;
-        //    if (CurrentTime >= TotalTime){CurrentTime -= TotalTime;}
-        //}
+        #endregion
 
+        #region HullBreach Events
         public bool ShipIsDamaged()
         {
             //Check Damage Based on Heat
@@ -172,21 +181,34 @@ namespace HullBreach
         }
 
         #region Parts that do not take on water curshed by going below a certain depth
-
+        
         [KSPField(isPersistant = true)]
         public bool crushable = false;
 
         public double warnTimer = 0;
-        public double warnDepth = 50;
+        public double warnDepth = 100;
         public double oldVesselDepth;
         
         [KSPField(isPersistant = true)]
-        public double crushDepth = 50;
+        public double crushDepth = 200;
+
+        //Get Time Delta
+        //private float CurrentTime = 0f;
+        //private float TotalTime = 1f;
+
+        //private void GetTimeDiff()
+        //{
+        //    CurrentTime += Time.deltaTime;
+        //    if (CurrentTime >= TotalTime){CurrentTime -= TotalTime;}
+        //}
+
 
         private void crushingDepth()
         {
-            if (FlightGlobals.ActiveVessel == null || this.part.submergedPortion != 1) return; //Nothing crushed unless its underwater
-            if (hull || hydroExplosive) return; //No hulls or Hydroexplosive parts will be crushed, they will slowly add heat and explode
+            //Nothing crushed unless : Vessel is under water, part is crushable,part is fully submerged, part is not a hull and part is not hydroexplosive
+            // Any of these true do not crush
+            if (TrueAlt()> 0 || !crushable || part.submergedPortion != 1 || hull || hydroExplosive) return; 
+            
             if(crushable) part.partBuoyancy = null; // trying to kill floaty bits that never sink 
           
             if (warnTimer > 0f) warnTimer -= Time.deltaTime;
@@ -196,10 +218,10 @@ namespace HullBreach
                 warnTimer = 5;
             }
 
-            oldVesselDepth = this.part.depth;
+            oldVesselDepth = part.depth;
             foreach (Vessel crushableVessel in FlightGlobals.Vessels)
             {
-                if (crushableVessel.loaded && this.part.depth > warnDepth)
+                if (crushableVessel.loaded && part.depth > warnDepth)
                 {
                     foreach (Part crushablePart in crushableVessel.parts)
                     {
@@ -213,6 +235,7 @@ namespace HullBreach
             }
         }
 
+        #endregion
         #endregion
 
     }
