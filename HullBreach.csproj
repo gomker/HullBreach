@@ -91,7 +91,7 @@ SET pdb2mdb=C:\Games\Tools\pdb2mdb\
 
 xcopy /Y "$(TargetPath)" "$(ProjectDir)\GameData\$(TargetName)\Plugins\"
 xcopy /Y "$(TargetPath)" "%25KSP_DIR%25\$(TargetName)\Plugins\"
-xcopy /Y "$(TargetPath)" "C:\Users\dlane\Dropbox\Kerbal\ModRelease\Test\"
+xcopy /Y "$(TargetPath)" "C:\Users\dlane\Dropbox\Kerbal\ModDevelopment\Release"
 
 @echo building $(Targetname).dll.mdb file for debug...
 call "%25pdb2mdb%25\pdb2mdb.exe" "$(TargetFileName)"
@@ -104,7 +104,7 @@ if exist "$(ProjectDir)BuildRelease\*.zip" del "$(ProjectDir)BuildRelease\*.zip"
 call "%25ZIP%25\7za.exe" a -tzip -r  "$(ProjectDir)BuildRelease\$(TargetName)_$(ConfigurationName).v@(VersionNumber)_%25DATE:~4,2%25%25DATE:~7,2%25%25DATE:~10,4%25.zip" "$(ProjectDir)GameData\"
 
 @echo copy package to Dropbox
-xcopy /Y "$(ProjectDir)BuildRelease\*.zip" "C:\Users\dlane\Dropbox\Kerbal\ModRelease\Test\"
+xcopy /Y "$(ProjectDir)BuildRelease\*.zip" "C:\Users\dlane\Dropbox\Kerbal\ModDevelopment\Release\"
 
 @echo Build/deploy complete!</PostBuildEvent>
   </PropertyGroup>
