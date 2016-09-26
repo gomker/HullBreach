@@ -98,13 +98,7 @@ namespace HullBreach
                 
         public void FixedUpdate()
         {
-            //*Debug Fields
-            vesselSituation = vessel.situation.ToString();
-            currentAlt = TrueAlt();
-            pctHeat = Math.Round((this.part.temperature / this.part.maxTemp) * 100);
-            currentDepth = Math.Round(this.part.depth,2);
-            //*
-
+            if (vessel == null) { return; }
             if (!(vessel.situation == Vessel.Situations.SPLASHED)) return;
                         
             if (this.part.WaterContact & ShipIsDamaged() & HullisBreached & hull)
@@ -144,6 +138,17 @@ namespace HullBreach
             }
         }
 
+        public void LateUpdate()
+        {
+            if (vessel == null) {return;}
+            
+            vesselSituation = vessel.situation.ToString();
+            currentAlt = Math.Round(TrueAlt(),2);
+            pctHeat = Math.Round((this.part.temperature / this.part.maxTemp) * 100);
+            currentDepth = Math.Round(this.part.depth, 2);
+            
+        
+        }
         public double TrueAlt()
         {
             Vector3 pos = this.vessel.GetWorldPos3D();
