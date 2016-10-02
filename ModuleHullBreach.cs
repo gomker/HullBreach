@@ -103,30 +103,33 @@ namespace HullBreach
                         
             if (this.part.WaterContact & ShipIsDamaged() & HullisBreached & hull)
             { 
-                //Water Should Come In 
-                ScreenMessages.PostScreenMessage("Warning: Hull Breach", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                if (FlightGlobals.ActiveVessel) { ScreenMessages.PostScreenMessage("Warning: Hull Breach", 5.0f, ScreenMessageStyle.UPPER_CENTER); }
+                
                 switch (DamageState)
                 {
                     case "Normal":
-                        this.part.RequestResource("SeaWater", (0 - (flowRate * (0.1 + this.part.submergedPortion) * flowMultiplier)));
+                        vessel.IgnoreGForces(240);
+                        part.RequestResource("SeaWater", (0 - (flowRate * (0.1 + this.part.submergedPortion) * flowMultiplier)));
                         break;
                     case "Critical":
-                        this.part.RequestResource("SeaWater", (0 - (critFlowRate * (0.1 + this.part.submergedPortion) * flowMultiplier)));
+                        vessel.IgnoreGForces(240);
+                        part.RequestResource("SeaWater", (0 - (critFlowRate * (0.1 + this.part.submergedPortion) * flowMultiplier)));
                         break;
                 }
             }
             
-            //If part underwater add heat at a greater rate based on depth to simulate pressure
-            sumergedPortion = Math.Round(this.part.submergedPortion,6);
+            //If part underwater add heat (damage) at a greater rate based on depth to simulate pressure
+            sumergedPortion = Math.Round(this.part.submergedPortion,4);
 
-            if (this.part.submergedPortion == 1 && hydroExplosive)
-            {
-                // this.part.depth
-                this.part.temperature += (0.1 * this.part.depth);
-                this.part.RequestResource("Electric Charge", 1000); //kill EC if sumberged
-            }
-            else
+            if (this.part.submergedPortion == 1 & hydroExplosive)
             {                
+                part.temperature += (0.1 * this.part.depth);                
+            }
+            else if (crushable & part.submergedPortion == 1)
+            {
+                part.RequestResource("Electric Charge", 100); //kill EC if sumberged
+                if (crushable) part.buoyancy = -.5f; // trying to kill floaty bits that never sink 
+                
                 if (warnTimer > 0f) warnTimer -= Time.deltaTime;
                 if (part.depth > warnDepth && oldVesselDepth > warnDepth && warnTimer <= 0)
                 {
@@ -145,9 +148,7 @@ namespace HullBreach
             vesselSituation = vessel.situation.ToString();
             currentAlt = Math.Round(TrueAlt(),2);
             pctHeat = Math.Round((this.part.temperature / this.part.maxTemp) * 100);
-            currentDepth = Math.Round(this.part.depth, 2);
-            
-        
+            currentDepth = Math.Round(this.part.depth, 2);         
         }
         public double TrueAlt()
         {
@@ -220,15 +221,14 @@ namespace HullBreach
             //Nothing crushed unless : Vessel is under water, part is crushable,part is fully submerged, part is not a hull and part is not hydroexplosive
             // Any of these true do not crush
             if (!crushable || hull || hydroExplosive || part.submergedPortion != 1 || TrueAlt() > 0.01) return;            
-            if(crushable) part.buoyancy = 0f; // trying to kill floaty bits that never sink 
-            
+                        
             //foreach (Vessel crushableVessel in FlightGlobals.Vessels)  //grabbing all vessels?
             //{
                 //if (crushableVessel.loaded & crushable)
                 //{
                     //foreach (Part crushablePart in crushableVessel.parts)
                    // {
-                        if (crushable & this.part.depth > crushDepth & (TrueAlt()* -1) > crushDepth)
+                        if (crushable & part.depth > crushDepth & (TrueAlt()* -1) > crushDepth)
                         {
                             GameEvents.onCrashSplashdown.Fire(new EventReport(FlightEvents.SPLASHDOWN_CRASH, part, part.partInfo.title, "ocean", 0, " Part was crushed under the weight of the ocean"));
                             part.explode();
