@@ -48,8 +48,8 @@ namespace HullBreach
         [KSPField(guiActive = true, isPersistant = false, guiName = "Current Depth")]
         public double currentDepth = 0;
 
-        [KSPField(guiActive = true, isPersistant = false, guiName = "Current Altitude")]
-        public double currentAlt = 0;
+        //[KSPField(guiActive = true, isPersistant = false, guiName = "Current Altitude")]
+        //public double currentAlt = 0;
 
         #endregion DebugFields            
         
@@ -92,7 +92,7 @@ namespace HullBreach
                 Fields["Current Situation"].guiActive = false;
                 Fields["Heat Level"].guiActive = false;
                 Fields["Current Depth"].guiActive = false;
-                Fields["Current Altitude"].guiActive = false;
+                //Fields["Current Altitude"].guiActive = false;
             }
         }
                 
@@ -127,7 +127,8 @@ namespace HullBreach
             }
             else if (crushable & part.submergedPortion == 1)
             {
-                part.RequestResource("Electric Charge", 100); //kill EC if sumberged
+                part.RequestResource("ElectricCharge", 1000); //kill EC if sumberged
+                
                 if (crushable) part.buoyancy = -.5f; // trying to kill floaty bits that never sink 
                 
                 if (warnTimer > 0f) warnTimer -= Time.deltaTime;
@@ -146,7 +147,7 @@ namespace HullBreach
             if (vessel == null) {return;}
             
             vesselSituation = vessel.situation.ToString();
-            currentAlt = Math.Round(TrueAlt(),2);
+            //currentAlt = Math.Round(TrueAlt(),2);
             pctHeat = Math.Round((this.part.temperature / this.part.maxTemp) * 100);
             currentDepth = Math.Round(this.part.depth, 2);         
         }
