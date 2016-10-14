@@ -99,9 +99,10 @@ namespace HullBreach
         public void FixedUpdate()
         {
             if (vessel == null) { return; }
+            part.rigidAttachment = true;
             if (!(vessel.situation == Vessel.Situations.SPLASHED)) return;
                         
-            if (this.part.WaterContact & ShipIsDamaged() & HullisBreached & hull)
+            if (part.WaterContact & ShipIsDamaged() & HullisBreached & hull)
             { 
                 if (FlightGlobals.ActiveVessel) { ScreenMessages.PostScreenMessage("Warning: Hull Breach", 5.0f, ScreenMessageStyle.UPPER_CENTER); }
                 
@@ -109,11 +110,11 @@ namespace HullBreach
                 {
                     case "Normal":
                         vessel.IgnoreGForces(240);
-                        part.RequestResource("SeaWater", (0 - (flowRate * (0.1 + this.part.submergedPortion) * flowMultiplier)));
+                        part.RequestResource("SeaWater", (0 - (flowRate * (0.1 + part.submergedPortion) * flowMultiplier)));
                         break;
                     case "Critical":
                         vessel.IgnoreGForces(240);
-                        part.RequestResource("SeaWater", (0 - (critFlowRate * (0.1 + this.part.submergedPortion) * flowMultiplier)));
+                        part.RequestResource("SeaWater", (0 - (critFlowRate * (0.1 + part.submergedPortion) * flowMultiplier)));
                         break;
                 }
             }
@@ -129,7 +130,7 @@ namespace HullBreach
             {
                 part.RequestResource("ElectricCharge", 1000); //kill EC if sumberged
                 
-                if (crushable) part.buoyancy = -.5f; // trying to kill floaty bits that never sink 
+                if (crushable) part.buoyancy = -1.0f; // trying to kill floaty bits that never sink 
                 
                 if (warnTimer > 0f) warnTimer -= Time.deltaTime;
                 if (part.depth > warnDepth && oldVesselDepth > warnDepth && warnTimer <= 0)
