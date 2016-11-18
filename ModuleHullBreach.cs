@@ -171,7 +171,7 @@ namespace HullBreach
             //currentAlt = Math.Round(TrueAlt(),2);
             pctHeat = Math.Round((part.temperature/part.maxTemp)*100);
             currentDepth = Math.Round(part.depth, 2);
-            VesselMass = vessel.totalMass;
+            VesselMass = Math.Round(vessel.totalMass);
         }
 
         public double TrueAlt()
