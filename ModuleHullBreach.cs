@@ -2,9 +2,21 @@
 using UnityEngine;
 
 namespace HullBreach
-{
+{   
     public class ModuleHullBreach : PartModule
     {
+        static ModuleHullBreach instance;
+        public static ModuleHullBreach Instance => instance;
+
+        public static bool _ecDrain = true;
+
+        public static bool ecDrain
+        {
+            get { return _ecDrain; }
+            set { _ecDrain = value; }
+
+        }
+
         #region KSP Fields
 
         public bool isHullBreached;
@@ -43,11 +55,16 @@ namespace HullBreach
         [UI_FloatRange(minValue = 1, maxValue = 100, stepIncrement = 1)] [KSPField(guiActive = true, guiActiveEditor = true, /*guiFormat = "P0",*/ isPersistant = true,
                                                                               guiName = "FlowRateModifier")] public float flowMultiplier = 1;
 
-        [KSPField(isPersistant = true, guiActive = true, guiName = "Test Breach")] Boolean forceHullBreach;
+        [KSPField(isPersistant = true, guiActive = true, guiName = "Test Breach")]
+        public static Boolean forceHullBreach;
 
         [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Test Breach")]
         public void ToggleHullBreach()
         {
+            //if (!(vessel.id == FlightGlobals.ActiveVessel.id)) { return; }
+            //if (!(vessel.id == FlightGlobals.ActiveVessel.id)) { return; }
+            if (!vessel.isActiveVessel) { return; }
+
             if (isHullBreached)
             {
                 isHullBreached = false;
@@ -70,16 +87,22 @@ namespace HullBreach
 
         public override void OnStart(StartState state)
         {
-            if (state != StartState.Editor & vessel != null & partDebug == false)
-                //hiding info fields for troubleshooting
-                //foreach (BaseField f in Fields) { f.guiActive = false; } ???
+            if (state != StartState.Editor && vessel != null)
             {
-                //Fields["Submerged Portion"].guiActive = false;
-                //Fields["Current Situation"].guiActive = false;
-                Fields["Heat Level"].guiActive = false;
-                Fields["Current Depth"].guiActive = false;
-                //Fields["Current Altitude"].guiActive = false;
+                part.force_activate();
+                instance = this;
             }
+
+            //if (state != StartState.Editor & vessel != null & partDebug == false)
+            //hiding info fields for troubleshooting
+            //foreach (BaseField f in Fields) { f.guiActive = false; } ???
+            //{
+            //Fields["Submerged Portion"].guiActive = false;
+            //Fields["Current Situation"].guiActive = false;
+            //Fields["Heat Level"].guiActive = false;
+            //Fields["Current Depth"].guiActive = false;
+            //Fields["Current Altitude"].guiActive = false;
+            //}
 
             // GameEvents.onVesselStandardModification.Add(triggerCatastrophicBreach);
             //  onVesselStandardModification collects various vessel events and fires them off with a single one.
@@ -87,25 +110,26 @@ namespace HullBreach
             // List<Part> HullParts = new List<Part>();
 
             //  GameEvents.onVesselPartCountChanged.Add(triggerCatastrophicBreach);
-            GameEvents.onPartJointBreak.Add(CheckCatastrophicBreach);
+
+            //if(part.Modules.Contains("ModuleHullBreach")) GameEvents.onPartJointBreak.Add(CheckCatastrophicBreach);
         }
 
         public void CheckCatastrophicBreach(PartJoint partJoint, float breakForce)
         {
             if (vessel.situation != Vessel.Situations.SPLASHED) return;
 
-            if (hull)
-            {
+            //if (hull)
+            //{
                 // ScreenMessages.PostScreenMessage("Catastrophic Hull Damage", 30.0f, ScreenMessageStyle.UPPER_CENTER);
-            }
+            //}
         }
 
         public void FixedUpdate()
         {
-            if (vessel == null)
-            {
-                return;
-            }
+            //if (vessel == null || !vessel.FindPartModuleImplementing<ModuleHullBreach>())
+            //{
+            //    return;
+            //}
             part.rigidAttachment = true;
 
             if (vessel.situation != Vessel.Situations.SPLASHED) return;
@@ -138,9 +162,11 @@ namespace HullBreach
             {
                 part.temperature += (0.1*part.depth);
             }
-            else if (crushable & part.submergedPortion == 1.00)
+            else if (crushable && part.submergedPortion == 1.00 && !part.localRoot.name.StartsWith("Sub"))
             {
-                part.RequestResource("ElectricCharge", 1000); //kill EC if sumberged
+
+                if(_ecDrain)
+                    part.RequestResource("ElectricCharge", 1000); //kill EC if sumberged
 
                 if (crushable) part.buoyancy = -1.0f; // trying to kill floaty bits that never sink 
 
@@ -162,10 +188,10 @@ namespace HullBreach
 
         public void LateUpdate()
         {
-            if (vessel == null)
-            {
-                return;
-            }
+            //if (vessel == null || !vessel.FindPartModuleImplementing<ModuleHullBreach>())
+            //{
+            //    return;
+            //}
 
             //vesselSituation = vessel.situation.ToString();
             //currentAlt = Math.Round(TrueAlt(),2);
@@ -173,21 +199,10 @@ namespace HullBreach
             currentDepth = Math.Round(part.depth, 2);
             VesselMass = Math.Round(vessel.totalMass);
         }
-
-        public double TrueAlt()
+        
+        public void OnDestroy()
         {
-            Vector3 pos = vessel.GetWorldPos3D();
-            double ASL = FlightGlobals.getAltitudeAtPos(pos);
-            if (vessel.mainBody.pqsController == null)
-            {
-                return ASL;
-            }
-            double terrainAlt = vessel.pqsAltitude;
-            if (vessel.mainBody.ocean && terrainAlt <= 0)
-            {
-                return ASL;
-            } //Checks for oceans
-            return ASL - terrainAlt;
+            instance = null;
         }
 
         #endregion
@@ -244,6 +259,22 @@ namespace HullBreach
             {
                 part.explode();
             }
+        }
+
+        public double TrueAlt()
+        {
+            Vector3 pos = vessel.GetWorldPos3D();
+            double ASL = FlightGlobals.getAltitudeAtPos(pos);
+            if (vessel.mainBody.pqsController == null)
+            {
+                return ASL;
+            }
+            double terrainAlt = vessel.pqsAltitude;
+            if (vessel.mainBody.ocean && terrainAlt <= 0)
+            {
+                return ASL;
+            } //Checks for oceans
+            return ASL - terrainAlt;
         }
 
         #endregion
