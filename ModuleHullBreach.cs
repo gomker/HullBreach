@@ -8,15 +8,6 @@ namespace HullBreach
         static ModuleHullBreach instance;
         public static ModuleHullBreach Instance => instance;
 
-        public static bool _ecDrain = true;
-
-        public static bool ecDrain
-        {
-            get { return _ecDrain; }
-            set { _ecDrain = value; }
-
-        }
-
         #region KSP Fields
 
         public bool isHullBreached;
@@ -91,6 +82,8 @@ namespace HullBreach
             {
                 part.force_activate();
                 instance = this;
+                if(part.FindModulesImplementing<ModuleHullBreach>().Count !=0)
+                    config.Instance.vesselHullBreach = this;
             }
 
             //if (state != StartState.Editor & vessel != null & partDebug == false)
@@ -126,10 +119,14 @@ namespace HullBreach
 
         public void FixedUpdate()
         {
-            //if (vessel == null || !vessel.FindPartModuleImplementing<ModuleHullBreach>())
-            //{
-            //    return;
-            //}
+            try
+            {
+                if (vessel == null || !vessel.FindPartModuleImplementing<ModuleHullBreach>())
+                    return;
+            }
+            catch (Exception e)
+            { }
+
             part.rigidAttachment = true;
 
             if (vessel.situation != Vessel.Situations.SPLASHED) return;
@@ -165,7 +162,7 @@ namespace HullBreach
             else if (crushable && part.submergedPortion == 1.00 && !part.localRoot.name.StartsWith("Sub"))
             {
 
-                if(_ecDrain)
+                if(config.ecDrain)
                     part.RequestResource("ElectricCharge", 1000); //kill EC if sumberged
 
                 if (crushable) part.buoyancy = -1.0f; // trying to kill floaty bits that never sink 
@@ -188,11 +185,14 @@ namespace HullBreach
 
         public void LateUpdate()
         {
-            //if (vessel == null || !vessel.FindPartModuleImplementing<ModuleHullBreach>())
-            //{
-            //    return;
-            //}
-
+            try
+            {
+                if (vessel == null || !vessel.FindPartModuleImplementing<ModuleHullBreach>())
+                    return;
+            }
+            catch (Exception e)
+            { }
+            
             //vesselSituation = vessel.situation.ToString();
             //currentAlt = Math.Round(TrueAlt(),2);
             pctHeat = Math.Round((part.temperature/part.maxTemp)*100);

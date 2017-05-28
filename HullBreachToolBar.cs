@@ -55,21 +55,23 @@ namespace HullBreach
 
             if (!FlightGlobals.ActiveVessel) { return; }
 
-            if (ModuleHullBreach.Instance)
+            if (config.Instance.vesselHullBreach != null)
             {
-                if (ModuleHullBreach.ecDrain)
+                if (config.ecDrain)
                 {
                     if (GUI.Button(LineRect(ref line, 1.5f), "EC Drain ON", HighLogic.Skin.button))
                     {
                         //ModuleHullBreach.Instance.ToggleHullBreach();
-                        ModuleHullBreach.ecDrain = false;                        
+                        config.ecDrain = false;
+                        config.SaveConfig();                        
                     }
                 }
                 else
                 {
                     if (GUI.Button(LineRect(ref line, 2), "EC Drain OFF", HighLogic.Skin.button))
                     {
-                        ModuleHullBreach.ecDrain = true;                        
+                        config.ecDrain = true;
+                        config.SaveConfig();
                     }
                 }
                 
