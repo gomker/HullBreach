@@ -13,21 +13,34 @@ namespace HullBreach
         public bool isHullBreached;
         public string DamageState = "None"; //None, Normal,Critical
 
-        [KSPField(isPersistant = false)] public double flowRate = .5;
+        [KSPField(isPersistant = false)]
+        public double flowRate = .5;
 
-        [KSPField(isPersistant = false)] public double critFlowRate = 1;
+        [KSPField(isPersistant = false)]
+        public double critFlowRate = 1;
 
-        [KSPField(isPersistant = false)] public double breachTemp = 0.6;
+        [KSPField(isPersistant = false)]
+        public double breachTemp = 0.6;
 
-        [KSPField(isPersistant = false)] public double critBreachTemp = 0.9;
+        [KSPField(isPersistant = false)]
+        public double critBreachTemp = 0.9;
 
-        [KSPField(isPersistant = true)] public bool hydroExplosive = false;
+        [KSPField(isPersistant = true)]
+        public bool hydroExplosive = false;
 
-        [KSPField(isPersistant = true)] public bool hull = false;
+        [KSPField(isPersistant = true)]
+        public bool hull = false;
+
+        [KSPField(guiActive = true, guiActiveEditor = true, guiName = "Crush Depth", isPersistant = true), UI_FloatRange(minValue = 0f, maxValue = 600f, stepIncrement = 1f)]
+        public float crushDepth = 200f;
+                
+        [KSPField(isPersistant = true)]
+        public bool DepthCharge = false;
 
         #region Debug Fields
 
-        [KSPField(isPersistant = true)] public bool partDebug = true;
+        [KSPField(isPersistant = true)]
+        public bool partDebug = true;
 
         //[KSPField(guiActive = true, isPersistant = false, guiName = "Submerged Portion")]
         //public double sumergedPortion;
@@ -35,21 +48,28 @@ namespace HullBreach
         //[KSPField(guiActive = true, isPersistant = false, guiName = "Current Situation")]
         //public string vesselSituation;
 
-        [KSPField(guiActive = true, isPersistant = false, guiName = "Heat Level")] public double pctHeat = 0;
+        [KSPField(guiActive = true, isPersistant = false, guiName = "Heat Level")]
+        public double pctHeat = 0;
 
-        [KSPField(guiActive = true, isPersistant = false, guiName = "Current Depth")] public double currentDepth = 0;
+        [KSPField(guiActive = true, isPersistant = false, guiName = "Current Depth")]
+        public double currentDepth = 0;
 
-        [KSPField(guiActive = true, isPersistant = false, guiName = "Vessel Mass")] public double VesselMass;
+        [KSPField(guiActive = true, isPersistant = false, guiName = "Vessel Mass")]
+        public double VesselMass;
 
         #endregion DebugFields
 
-        [UI_FloatRange(minValue = 1, maxValue = 100, stepIncrement = 1)] [KSPField(guiActive = true, guiActiveEditor = true, /*guiFormat = "P0",*/ isPersistant = true,
-                                                                              guiName = "FlowRateModifier")] public float flowMultiplier = 1;
+        [UI_FloatRange(minValue = 1, maxValue = 100, stepIncrement = 1)] [KSPField(guiActive = true, guiActiveEditor = true,isPersistant = true, guiName = "Flow Rate")]
+        public float flowMultiplier = 1;
 
-        [KSPField(isPersistant = true, guiActive = true, guiName = "Test Breach")]
+        [KSPField(isPersistant = true, guiActive = true,guiActiveEditor = false, guiName = "Test Breach")]
         public static Boolean forceHullBreach;
 
-        [KSPEvent(guiActive = true, guiActiveEditor = true, guiName = "Test Breach")]
+        [KSPEvent(guiActive = true, guiActiveEditor = false, guiName = "Test Breach")]
+
+
+        #endregion KSPFields
+
         public void ToggleHullBreach()
         {
             //if (!(vessel.id == FlightGlobals.ActiveVessel.id)) { return; }
@@ -72,8 +92,6 @@ namespace HullBreach
             }
         }
 
-        #endregion KSPFields
-
         #region GameEvents
 
         public override void OnStart(StartState state)
@@ -84,6 +102,17 @@ namespace HullBreach
                 instance = this;
                 if(part.FindModulesImplementing<ModuleHullBreach>().Count !=0)
                     config.Instance.vesselHullBreach = this;
+            }
+
+            if (!crushable)
+            {
+                Fields["crushDepth"].guiActive = false;
+                Fields["crushDepth"].guiActiveEditor = false;
+            }
+            else
+            {
+                Fields["flowMultiplier"].guiActive = false;
+                Fields["flowMultiplier"].guiActiveEditor = false;
             }
 
             //if (state != StartState.Editor & vessel != null & partDebug == false)
@@ -172,9 +201,18 @@ namespace HullBreach
                 {
                     if (FlightGlobals.ActiveVessel)
                     {
-                        ScreenMessages.PostScreenMessage(
+                        if (DepthCharge == false)
+                        {
+                            ScreenMessages.PostScreenMessage(
                             "Warning! Vessel will be crushed at " + (crushDepth) + "m depth!", 3,
                             ScreenMessageStyle.LOWER_CENTER);
+                        }
+                        else
+                        {
+                            ScreenMessages.PostScreenMessage(
+                            (crushDepth) + "m Charge Deployed!", 3,
+                            ScreenMessageStyle.LOWER_CENTER);
+                        }
                     }
                     warnTimer = 5;
                 }
@@ -246,8 +284,6 @@ namespace HullBreach
         public double warnTimer = 0;
         public double warnDepth = 100;
         public double oldVesselDepth;
-
-        [KSPField(isPersistant = true)] public double crushDepth = 200;
 
         private void crushingDepth()
         {
