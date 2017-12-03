@@ -1,5 +1,7 @@
 ﻿using System;
 using UnityEngine;
+using BDArmory.Core.Extension;
+using BDArmory.Core.Module;
 
 namespace HullBreach
 {   
@@ -48,8 +50,8 @@ namespace HullBreach
         //[KSPField(guiActive = true, isPersistant = false, guiName = "Current Situation")]
         //public string vesselSituation;
 
-        [KSPField(guiActive = true, isPersistant = false, guiName = "Heat Level")]
-        public double pctHeat = 0;
+        //[KSPField(guiActive = true, isPersistant = false, guiName = "Heat Level")]
+        //public double pctHeat = 0;
 
         [KSPField(guiActive = true, isPersistant = false, guiName = "Current Depth")]
         public double currentDepth = 0;
@@ -148,12 +150,17 @@ namespace HullBreach
 
         public void FixedUpdate()
         {
-            try
+           if (!HighLogic.LoadedSceneIsFlight) return;
+
+           try
             {
-                if (vessel == null || !vessel.FindPartModuleImplementing<ModuleHullBreach>())
+                if (part == null ||
+                    !part.Modules.Contains("ModuleHullBreach") ||
+                    !part.Modules.Contains("HitpointTracker")                    
+                    )
                     return;
             }
-            catch (Exception e)
+            catch (Exception)
             { }
 
             part.rigidAttachment = true;
@@ -164,7 +171,14 @@ namespace HullBreach
             {
                 if (FlightGlobals.ActiveVessel)
                 {
-                    ScreenMessages.PostScreenMessage("Warning: Hull Breach", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                    if (DamageState == "Critical")
+                    {
+                        ScreenMessages.PostScreenMessage("Warning: Critical Hull Breach", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                    }
+                    else
+                    {
+                        ScreenMessages.PostScreenMessage("Warning: Hull Breach", 5.0f, ScreenMessageStyle.UPPER_CENTER);
+                    }
                 }
 
                 switch (DamageState)
@@ -223,17 +237,21 @@ namespace HullBreach
 
         public void LateUpdate()
         {
+            if (!HighLogic.LoadedSceneIsFlight) return;
             try
             {
-                if (vessel == null || !vessel.FindPartModuleImplementing<ModuleHullBreach>())
+                if (part == null ||
+                    !part.Modules.Contains("ModuleHullBreach") ||
+                    !part.Modules.Contains("HitpointTracker")
+                    )
                     return;
             }
-            catch (Exception e)
+            catch (Exception)
             { }
             
             //vesselSituation = vessel.situation.ToString();
             //currentAlt = Math.Round(TrueAlt(),2);
-            pctHeat = Math.Round((part.temperature/part.maxTemp)*100);
+            //pctHeat = Math.Round((part.temperature/part.maxTemp)*100);
             currentDepth = Math.Round(part.depth, 2);
             VesselMass = Math.Round(vessel.totalMass);
         }
@@ -252,12 +270,18 @@ namespace HullBreach
             //Check Damage Based on Heat
             //Increase DamageState Nomal/Crit Level
             //Flip isHullBreached to Trigger adding SeaWater
-            if (part.temperature >= (part.maxTemp*breachTemp))
+
+            //if (part.temperature >= (part.maxTemp*breachTemp))
+            float damage = part.Damage();
+            float max_damage = part.MaxDamage();
+            float dmg_pct = damage / max_damage;
+
+            if (dmg_pct >= critBreachTemp && dmg_pct <= breachTemp )
             {
                 isHullBreached = true;
                 DamageState = "Normal";
             }
-            else if (part.temperature >= (part.maxTemp*critBreachTemp))
+            else if (dmg_pct >= 0 && dmg_pct <= critBreachTemp)
             {
                 isHullBreached = true;
                 DamageState = "Critical";
