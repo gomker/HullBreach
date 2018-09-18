@@ -286,6 +286,11 @@ namespace HullBreach
                 isHullBreached = true;
                 DamageState = "Critical";
             }
+            else
+            {
+                isHullBreached = false;
+                DamageState = "None";
+            }
 
             if (forceHullBreach == true) //forcing if testing hull breach or if Catastrophic damage triggerd
             {
