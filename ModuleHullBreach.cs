@@ -317,7 +317,16 @@ namespace HullBreach
 
             if (crushable & part.depth > crushDepth & (TrueAlt()*-1) > crushDepth)
             {
-                part.explode();
+
+                if (DepthCharge)
+                {
+                    part.explode();
+                }
+                else
+                {
+                    part.Destroy();
+                }
+                
             }
         }
 
