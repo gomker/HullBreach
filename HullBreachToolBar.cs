@@ -1,143 +1,116 @@
-﻿//Code Adapted from https://github.com/BahamutoD/VesselMover/blob/master/VesselMoverToolbar.cs
+﻿//Toolbar pattern originally adapted from https://github.com/BahamutoD/VesselMover/blob/master/VesselMoverToolbar.cs
 
-using UnityEngine;
+using System.Globalization;
 using KSP.UI.Screens;
+using UnityEngine;
 
 namespace HullBreach
 {
+    /// <summary>Flight-scene status window and quick settings, on the stock application launcher.</summary>
     [KSPAddon(KSPAddon.Startup.Flight, false)]
-    class HullBreachToolBar : MonoBehaviour
+    public class HullBreachToolBar : MonoBehaviour
     {
+        const int WindowId = 302115;
+        const float StatusRefreshInterval = 0.5f;
 
-        public static bool hasAddedButton = false;
-        public static bool toolbarGuiEnabled = false;
+        ApplicationLauncherButton button;
+        bool showWindow;
+        bool hideUI;
+        Rect windowRect = new Rect(Screen.width - 380, 250, 300, 10);
 
-        Rect toolbarRect;
-        float toolbarWidth = 280;
-        float toolbarHeight = 0;
-        float toolbarMargin = 6;
-        float toolbarLineHeight = 20;
-        float contentWidth;
-        Vector2 toolbarPosition;
-        Rect svRectScreenSpace;
-
-        //bool showMoveHelp = false;
-        //float helpHeight;
-
-        void VesselChange(Vessel v)
-        {
-            if (!v.isActiveVessel) return;
-        }
+        // Status strings are rebuilt twice a second while the window is open, not every OnGUI call.
+        string statusLine1 = string.Empty, statusLine2 = string.Empty, statusLine3 = string.Empty;
+        float refreshTimer;
 
         void Start()
         {
-            toolbarPosition = new Vector2(Screen.width - toolbarWidth - 80, 150);
-            toolbarRect = new Rect(toolbarPosition.x, toolbarPosition.y + 100, toolbarWidth, toolbarHeight);
-            contentWidth = toolbarWidth - (2 * toolbarMargin);
+            if (ApplicationLauncher.Ready) AddButton();
+            else GameEvents.onGUIApplicationLauncherReady.Add(AddButton);
+            GameEvents.onHideUI.Add(OnHideUI);
+            GameEvents.onShowUI.Add(OnShowUI);
+        }
 
-            AddToolbarButton();
+        void OnDestroy()
+        {
+            GameEvents.onGUIApplicationLauncherReady.Remove(AddButton);
+            GameEvents.onHideUI.Remove(OnHideUI);
+            GameEvents.onShowUI.Remove(OnShowUI);
+            if (button != null && ApplicationLauncher.Instance != null)
+                ApplicationLauncher.Instance.RemoveModApplication(button);
+            button = null;
+        }
 
-            GameEvents.onVesselChange.Add(VesselChange);
+        static void Noop() { }
+        void OnHideUI() { hideUI = true; }
+        void OnShowUI() { hideUI = false; }
+
+        void AddButton()
+        {
+            if (button != null || ApplicationLauncher.Instance == null) return;
+            Texture tex = GameDatabase.Instance.GetTexture("HullBreach/Icon/HullBreach", false);
+            button = ApplicationLauncher.Instance.AddModApplication(
+                () => showWindow = true, () => showWindow = false,
+                Noop, Noop, Noop, Noop,
+                ApplicationLauncher.AppScenes.FLIGHT, tex);
+        }
+
+        void Update()
+        {
+            if (!showWindow) return;
+            refreshTimer -= Time.unscaledDeltaTime;
+            if (refreshTimer > 0f) return;
+            refreshTimer = StatusRefreshInterval;
+            RefreshStatus();
+        }
+
+        void RefreshStatus()
+        {
+            Vessel v = FlightGlobals.ActiveVessel;
+            HullBreachVesselModule vm = v != null ? v.GetComponent<HullBreachVesselModule>() : null;
+            if (vm == null || vm.ModuleCount == 0)
+            {
+                statusLine1 = "No HullBreach parts on this vessel";
+                statusLine2 = statusLine3 = string.Empty;
+                return;
+            }
+            statusLine1 = (vm.IsSubmarine ? "Submarine" : "Surface vessel") + (vm.Foundered ? " - FOUNDERING" : string.Empty)
+                + "   hull parts: " + vm.HullCount.ToString(CultureInfo.InvariantCulture);
+            statusLine2 = "Breached: " + vm.LeakingCount.ToString(CultureInfo.InvariantCulture)
+                + "   critical: " + vm.CriticalCount.ToString(CultureInfo.InvariantCulture);
+            statusLine3 = "Water aboard: " + vm.WaterTonnes.ToString("F0", CultureInfo.InvariantCulture) + " t"
+                + (vm.CapacityTonnes > 0 ? " / " + vm.CapacityTonnes.ToString("F0", CultureInfo.InvariantCulture) + " t" : string.Empty)
+                + "   inflow: " + vm.InflowTonnesPerSec.ToString("F1", CultureInfo.InvariantCulture) + " t/s";
         }
 
         void OnGUI()
         {
-            if (toolbarGuiEnabled)
-            {
-                GUI.Window(302115, toolbarRect, ToolbarWindow, "HullBreach", HighLogic.Skin.window);
-            }
+            if (!showWindow || hideUI) return;
+            windowRect = GUILayout.Window(WindowId, windowRect, DrawWindow, "HullBreach", HighLogic.Skin.window, GUILayout.Width(300));
         }
 
-        void ToolbarWindow(int windowID)
+        void DrawWindow(int id)
         {
-            float line = 0;
-            line += 1.25f;
+            GUILayout.Label(statusLine1, HighLogic.Skin.label);
+            if (statusLine2.Length > 0) GUILayout.Label(statusLine2, HighLogic.Skin.label);
+            if (statusLine3.Length > 0) GUILayout.Label(statusLine3, HighLogic.Skin.label);
 
-            if (!FlightGlobals.ActiveVessel) { return; }
+            GUILayout.Space(6);
+            HullBreachSettings.Enabled = GUILayout.Toggle(HullBreachSettings.Enabled, " Flooding enabled", HighLogic.Skin.toggle);
+            HullBreachSettings.EcDrain = GUILayout.Toggle(HullBreachSettings.EcDrain, " Flooded compartments lose EC", HighLogic.Skin.toggle);
+            HullBreachSettings.Messages = GUILayout.Toggle(HullBreachSettings.Messages, " Screen messages", HighLogic.Skin.toggle);
+            HullBreachSettings.Debug = GUILayout.Toggle(HullBreachSettings.Debug, " Debug fields / test breach", HighLogic.Skin.toggle);
 
-            if (config.Instance.vesselHullBreach != null)
-            {
-                if (config.ecDrain)
-                {
-                    if (GUI.Button(LineRect(ref line, 1.5f), "EC Drain ON", HighLogic.Skin.button))
-                    {
-                        //ModuleHullBreach.Instance.ToggleHullBreach();
-                        config.ecDrain = false;
-                        config.SaveConfig();                        
-                    }
-                }
-                else
-                {
-                    if (GUI.Button(LineRect(ref line, 2), "EC Drain OFF", HighLogic.Skin.button))
-                    {
-                        config.ecDrain = true;
-                        config.SaveConfig();
-                    }
-                }
-                
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Flood speed x" + HullBreachSettings.GlobalFlowMultiplier.ToString("F2", CultureInfo.InvariantCulture), HighLogic.Skin.label, GUILayout.Width(120));
+            HullBreachSettings.GlobalFlowMultiplier = Mathf.Round(GUILayout.HorizontalSlider(HullBreachSettings.GlobalFlowMultiplier, 0.25f, 4f) * 4f) / 4f;
+            GUILayout.EndHorizontal();
 
-            }
-            else
-            {
-                GUIStyle centerLabelStyle = new GUIStyle(HighLogic.Skin.label) { alignment = TextAnchor.UpperCenter };
-                GUI.Label(LineRect(ref line), "No HullBreach Module Found", centerLabelStyle);
-            }
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("Save settings", HighLogic.Skin.button)) HullBreachSettings.Save();
+            if (GUILayout.Button("Reload", HighLogic.Skin.button)) HullBreachSettings.Load();
+            GUILayout.EndHorizontal();
 
-            //line += 0.2f;
-            //Rect spawnVesselRect = LineRect(ref line);
-            //svRectScreenSpace = new Rect(spawnVesselRect);
-            //svRectScreenSpace.x += toolbarRect.x;
-            //svRectScreenSpace.y += toolbarRect.y;
-            toolbarRect.height = (line * toolbarLineHeight) + (toolbarMargin * 2);
-        }
-
-        Rect LineRect(ref float currentLine, float heightFactor = 1)
-        {
-            Rect rect = new Rect(toolbarMargin, toolbarMargin + (currentLine * toolbarLineHeight), contentWidth, toolbarLineHeight * heightFactor);
-            currentLine += heightFactor + 0.1f;
-            return rect;
-        }
-
-
-        void LineLabel(string label, ref float line)
-        {
-            GUI.Label(LineRect(ref line), label, HighLogic.Skin.label);
-        }
-
-        void AddToolbarButton()
-        {
-            if (HighLogic.LoadedSceneIsFlight)
-            {
-                if (!hasAddedButton)
-                {
-                    Texture buttonTexture = GameDatabase.Instance.GetTexture("HullBreach/Icon/HullBreach", false);
-                    ApplicationLauncher.Instance.AddModApplication(ShowToolbarGUI, HideToolbarGUI, Dummy, Dummy, Dummy, Dummy, ApplicationLauncher.AppScenes.FLIGHT, buttonTexture);
-                    hasAddedButton = true;
-                }
-            }
-        }
-
-        public void ShowToolbarGUI()
-        {
-            HullBreachToolBar.toolbarGuiEnabled = true;
-        }
-
-        public void HideToolbarGUI()
-        {
-            HullBreachToolBar.toolbarGuiEnabled = false;
-        }
-
-        void Dummy()
-        { }
-
-        public static bool MouseIsInRect(Rect rect)
-        {
-            return rect.Contains(MouseGUIPos());
-        }
-
-        public static Vector2 MouseGUIPos()
-        {
-            return new Vector3(Input.mousePosition.x, Screen.height - Input.mousePosition.y, 0);
+            GUI.DragWindow();
         }
     }
 }
