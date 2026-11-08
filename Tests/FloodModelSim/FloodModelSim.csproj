@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Offline sanity simulation of FloodModel defaults. Not part of the mod build.
+       Run: dotnet run -c Release (from this folder) -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\..\FloodModel.cs" Link="FloodModel.cs" />
+  </ItemGroup>
+</Project>

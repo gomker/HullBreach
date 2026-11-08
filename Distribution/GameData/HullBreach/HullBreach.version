@@ -1,36 +1,15 @@
-﻿{
-    "NAME":"HullBreach",
-    "URL":"https://github.com/gomker/HullBreach/blob/master/Distribution/GameData/HullBreach/HullBreach.version",
-    "DOWNLOAD":"https://github.com/Gomker/HullBreach/releases/tag/v1.7.0.5,
+{
+    "NAME": "HullBreach",
+    "URL": "https://raw.githubusercontent.com/gomker/HullBreach/master/Distribution/GameData/HullBreach/HullBreach.version",
+    "DOWNLOAD": "https://github.com/gomker/HullBreach/releases",
     "GITHUB":
     {
-        "USERNAME":"gomker",
-        "REPOSITORY":"HullBreach",
-        "ALLOW_PRE_RELEASE":false
+        "USERNAME": "gomker",
+        "REPOSITORY": "HullBreach",
+        "ALLOW_PRE_RELEASE": false
     },
-    "VERSION":
-    {
-        "MAJOR":1,
-        "MINOR":7,
-        "PATCH":0,
-        "BUILD":5
-    },
-    "KSP_VERSION":
-    {
-        "MAJOR":1,
-        "MINOR":3,
-        "PATCH":0
-    },
-    "KSP_VERSION_MIN":
-    {
-        "MAJOR":1,
-        "MINOR":4,
-        "PATCH":0
-    },
-    "KSP_VERSION_MAX":
-    {
-        "MAJOR":1,
-        "MINOR":4,
-        "PATCH":9
-    }
+    "VERSION": { "MAJOR": 1, "MINOR": 8, "PATCH": 0, "BUILD": 0 },
+    "KSP_VERSION": { "MAJOR": 1, "MINOR": 12, "PATCH": 5 },
+    "KSP_VERSION_MIN": { "MAJOR": 1, "MINOR": 12, "PATCH": 0 },
+    "KSP_VERSION_MAX": { "MAJOR": 1, "MINOR": 12, "PATCH": 99 }
 }

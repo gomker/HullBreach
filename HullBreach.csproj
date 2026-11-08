@@ -1,127 +1,54 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    HullBreach for KSP 1.12.x + BDArmory Plus 1.13.x.
+
+    Build (point KSPRoot at a KSP 1.12.x install, or set the KSPDIR environment variable):
+      dotnet build -c Release -p:KSPRoot="C:\KSP"
+    BDArmory.dll is taken from $(KSPRoot)\GameData\BDArmory\Plugins unless overridden:
+      dotnet build -c Release -p:KSPRoot="C:\KSP" -p:BDArmoryDll="C:\path\to\BDArmory.dll"
+    Output: bin\Release\net48\HullBreach.dll  (copy to GameData\HullBreach\Plugins)
+  -->
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{4EA709D8-CDFB-4D7F-A34A-A4064DC5BD5D}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>HullBreach</RootNamespace>
+    <TargetFramework>net48</TargetFramework>
     <AssemblyName>HullBreach</AssemblyName>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
+    <RootNamespace>HullBreach</RootNamespace>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <Deterministic>true</Deterministic>
+    <DebugType>portable</DebugType>
+    <Optimize Condition="'$(Configuration)' == 'Release'">true</Optimize>
+    <AppendTargetFrameworkToOutputPath>true</AppendTargetFrameworkToOutputPath>
+    <KSPRoot Condition="'$(KSPRoot)' == ''">$(KSPDIR)</KSPRoot>
+    <KSPManaged>$(KSPRoot)\KSP_x64_Data\Managed</KSPManaged>
+    <BDArmoryDll Condition="'$(BDArmoryDll)' == ''">$(KSPRoot)\GameData\BDArmory\Plugins\BDArmory.dll</BDArmoryDll>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
+
   <ItemGroup>
+    <Compile Include="FloodModel.cs" />
     <Compile Include="HullBreachConfig.cs" />
-    <Compile Include="Gui.cs" />
     <Compile Include="HullBreachToolBar.cs" />
+    <Compile Include="HullBreachVesselModule.cs" />
     <Compile Include="ModuleHullBreach.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
+
   <ItemGroup>
-    <Content Include="LocalDev\7za_dir.txt" />
-    <Content Include="LocalDev\dist_dir.txt" />
-    <Content Include="LocalDev\ksp_dir.txt" />
-    <Content Include="LocalDev\mono_exe.txt" />
-    <Content Include="LocalDev\pdb2mdb_exe.txt" />
+    <Reference Include="Assembly-CSharp"><HintPath>$(KSPManaged)\Assembly-CSharp.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Assembly-CSharp-firstpass"><HintPath>$(KSPManaged)\Assembly-CSharp-firstpass.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine"><HintPath>$(KSPManaged)\UnityEngine.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.AnimationModule"><HintPath>$(KSPManaged)\UnityEngine.AnimationModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.CoreModule"><HintPath>$(KSPManaged)\UnityEngine.CoreModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.IMGUIModule"><HintPath>$(KSPManaged)\UnityEngine.IMGUIModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.PhysicsModule"><HintPath>$(KSPManaged)\UnityEngine.PhysicsModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.TextRenderingModule"><HintPath>$(KSPManaged)\UnityEngine.TextRenderingModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.UI"><HintPath>$(KSPManaged)\UnityEngine.UI.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="BDArmory"><HintPath>$(BDArmoryDll)</HintPath><Private>false</Private></Reference>
   </ItemGroup>
-  <ItemGroup>
-    <Reference Include="Assembly-CSharp, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\_LocalDev\KSPRefs\Assembly-CSharp.dll</HintPath>
-    </Reference>
-    <Reference Include="Assembly-CSharp-firstpass, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\_LocalDev\KSPRefs\Assembly-CSharp-firstpass.dll</HintPath>
-    </Reference>
-    <Reference Include="BDArmory.Core">
-      <HintPath>..\BDArmory\BDArmory.Core\obj\Debug\BDArmory.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="KSPAssets, Version=1.1.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\_LocalDev\KSPRefs\KSPAssets.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\_LocalDev\KSPRefs\UnityEngine.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.UI, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\_LocalDev\KSPRefs\UnityEngine.UI.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Target Name="PostBuildMacros">
-    <GetAssemblyIdentity AssemblyFiles="$(TargetPath)">
-      <Output TaskParameter="Assemblies" ItemName="Targets" />
-    </GetAssemblyIdentity>
-    <ItemGroup>
-      <VersionNumber Include="@(Targets->'%(Version)')" />
-    </ItemGroup>
+
+  <Target Name="CheckKSPReferences" BeforeTargets="ResolveAssemblyReferences">
+    <Error Condition="!Exists('$(KSPManaged)\Assembly-CSharp.dll')" Text="KSP assemblies not found in '$(KSPManaged)'. Pass -p:KSPRoot=&quot;path\to\KSP&quot; or set the KSPDIR environment variable." />
+    <Error Condition="!Exists('$(BDArmoryDll)')" Text="BDArmory.dll not found at '$(BDArmoryDll)'. Pass -p:BDArmoryDll=&quot;path\to\BDArmory.dll&quot;." />
   </Target>
-  <PropertyGroup>
-    <PostBuildEventDependsOn>
-    $(PostBuildEventDependsOn);
-    PostBuildMacros;
-  </PostBuildEventDependsOn>
-    <PostBuildEvent>@echo $(Targetname)
-SET ModName=HullBreach
-@echo ...
-@echo set lpath vars from LocalDev storage...
-set /p KSP_DIR=&lt;"$(ProjectDir)LocalDev\ksp_dir.txt"
-set /p PDB2MDB_EXE=&lt;"$(ProjectDir)LocalDev\pdb2mdb_exe.txt"
-set /p ZA_DIR=&lt;"$(ProjectDir)LocalDev\7za_dir.txt"
-set /p DIST_DIR=&lt;"$(ProjectDir)LocalDev\dist_dir.txt"
-
-@echo distributing $(Targetname) files...
-copy /Y "$(TargetPath)" "$(ProjectDir)Distribution\GameData\%25ModName%25\Plugins\"
-copy /Y "$(TargetPath)" "C:\Users\dlane\Dropbox\Kerbal\ModDevelopment\Release"
-
-if $(ConfigurationName) == Debug (
-@echo building $(Targetname).dll.mdb file...
-cd "$(TargetDir)"
-call "%25PDB2MDB_EXE%25" $(Targetname).dll
-copy /Y "$(TargetDir)$(Targetname).dll.mdb" "%25KSP_DIR%25\GameData\%25ModName%25\Plugins\"
-)
-
-@echo deleting previous build ...
-if exist "%25DIST_DIR%25\%25ModName%25*.zip" del "%25DIST_DIR%25\%25ModName%25*.zip"
-@echo packaging new build...
-call "%25ZA_DIR%25\7za.exe" a -tzip -r  "%25DIST_DIR%25\%25ModName%25.@(VersionNumber)_%25DATE:~4,2%25%25DATE:~7,2%25%25DATE:~10,4%25.zip" "$(ProjectDir)Distribution\*.*"
-
-@echo Deploy $(Targetname) Distribution files to test env:  %25KSP_DIR%25\GameData...
-@echo copying:"$(SolutionDir)Distribution\GameData" to "%25KSP_DIR%25\GameData" 
-xcopy /E /Y "$(SolutionDir)Distribution\GameData" "%25KSP_DIR%25\GameData"
-
-if $(ConfigurationName) == Debug (
-copy /Y "$(TargetDir)$(Targetname).pdb" "%25KSP_DIR%25\GameData\%25ModName%25\Plugins\"
-)
-
-@echo Build/deploy complete!</PostBuildEvent>
-  </PropertyGroup>
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
 </Project>
