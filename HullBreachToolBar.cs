@@ -82,6 +82,21 @@ namespace HullBreach
                 + "   inflow: " + vm.InflowTonnesPerSec.ToString("F1", CultureInfo.InvariantCulture) + " t/s";
         }
 
+        // Rebuilt only when the value changes, not on every OnGUI call.
+        float flowLabelValue = float.NaN;
+        string flowLabel = string.Empty;
+
+        string FlowLabel()
+        {
+            float v = HullBreachSettings.GlobalFlowMultiplier;
+            if (v != flowLabelValue)
+            {
+                flowLabelValue = v;
+                flowLabel = "Flood speed x" + v.ToString("F2", CultureInfo.InvariantCulture);
+            }
+            return flowLabel;
+        }
+
         void OnGUI()
         {
             if (!showWindow || hideUI) return;
@@ -101,7 +116,7 @@ namespace HullBreach
             HullBreachSettings.Debug = GUILayout.Toggle(HullBreachSettings.Debug, " Debug fields / test breach", HighLogic.Skin.toggle);
 
             GUILayout.BeginHorizontal();
-            GUILayout.Label("Flood speed x" + HullBreachSettings.GlobalFlowMultiplier.ToString("F2", CultureInfo.InvariantCulture), HighLogic.Skin.label, GUILayout.Width(120));
+            GUILayout.Label(FlowLabel(), HighLogic.Skin.label, GUILayout.Width(120));
             HullBreachSettings.GlobalFlowMultiplier = Mathf.Round(GUILayout.HorizontalSlider(HullBreachSettings.GlobalFlowMultiplier, 0.25f, 4f) * 4f) / 4f;
             GUILayout.EndHorizontal();
 
